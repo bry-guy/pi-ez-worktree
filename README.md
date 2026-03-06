@@ -34,7 +34,7 @@ If pi is already running, install the package and then run `/reload` in that pi 
 
 - `/wt-start <name>` — create and attach a fresh worktree for this pi session
 - `/wt-attach [branch-or-path]` — attach this pi session to an existing worktree
-- `/wt-status` — show current worktree status
+- `/wt-status` — show current worktree status, or list attachable worktrees when none is active
 - `/wt-finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
 - `/wt-abort [--force] [--keep-branch]` — remove the active worktree flow for this session
 
@@ -57,7 +57,7 @@ The extension also exposes tools so the agent can act on natural language reques
 
 If you omit the target, attach succeeds only when there is exactly **one** attachable worktree for the repository. If there are several, the tool tells you which branches/paths are available so you can choose one explicitly.
 
-When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktree.json` metadata file inside that worktree. That lets a later pi session re-attach cleanly and recover the original base branch and main checkout.
+When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktree.json` metadata file inside that worktree. That lets a later pi session re-attach cleanly and recover the original base branch and main checkout. The package also adds that file to the worktree's local git exclude list so it does not pollute status or get committed.
 
 ## Default finish behavior
 
@@ -116,6 +116,16 @@ Inside your repo:
 ```
 
 Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`, `ls`, and `!bash` all target the worktree automatically.
+
+### See what can be attached
+
+If no worktree is active for the current session, run:
+
+```text
+/wt-status
+```
+
+It will list attachable worktrees and suggest `/wt-attach` usage.
 
 ### Resume an existing worktree later
 

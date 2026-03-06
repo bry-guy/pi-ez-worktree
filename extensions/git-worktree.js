@@ -16,10 +16,12 @@ import {
 	createUserBashOperations,
 	createWorktree,
 	finishWorktree,
+	formatAttachableStatusText,
 	formatStatusBadge,
 	formatStatusText,
 	getEffectiveCwd,
 	getWorktreeStatus,
+	listAttachableWorktrees,
 	readStateFromEntries,
 	rewritePathForWorktree,
 } from "../lib/git-worktree.js";
@@ -121,8 +123,12 @@ export default function gitWorktreeExtension(pi) {
 		return state;
 	}
 
-	async function currentStatusText() {
-		if (!activeState?.active) return "No active pi-ez-worktree flow for this session.";
+	async function currentStatusText(ctx) {
+		if (!activeState?.active) {
+			const attachable = await listAttachableWorktrees(ctx.cwd).catch(() => undefined);
+			if (!attachable) return "No active pi-ez-worktree flow for this session.";
+			return formatAttachableStatusText(attachable);
+		}
 		const status = await getWorktreeStatus(activeState);
 		return formatStatusText(activeState, status);
 	}
@@ -250,9 +256,9 @@ export default function gitWorktreeExtension(pi) {
 	});
 
 	pi.registerCommand("wt-status", {
-		description: "Show the active pi-ez-worktree status",
+		description: "Show the active pi-ez-worktree status or attachable candidates",
 		handler: async (_args, ctx) => {
-			ctx.ui.notify(await currentStatusText(), "info");
+			ctx.ui.notify(await currentStatusText(ctx), "info");
 		},
 	});
 
@@ -328,12 +334,14 @@ export default function gitWorktreeExtension(pi) {
 	pi.registerTool({
 		name: "worktree_status",
 		label: "Worktree Status",
-		description: "Show the current session's active git worktree status.",
+		description: "Show the current session's active git worktree status, or list attachable worktrees when none is active.",
 		promptSnippet: "Inspect the current pi worktree flow status.",
 		parameters: Type.Object({}),
-		async execute() {
+		async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
 			if (!activeState?.active) {
-				return { content: [{ type: "text", text: "No active worktree flow for this session." }], details: {} };
+				const attachable = await listAttachableWorktrees(ctx.cwd).catch(() => undefined);
+				const text = attachable ? formatAttachableStatusText(attachable) : "No active worktree flow for this session.";
+				return { content: [{ type: "text", text }], details: { attachable } };
 			}
 			const status = await getWorktreeStatus(activeState);
 			return {
