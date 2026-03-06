@@ -1,0 +1,26 @@
+{
+  "name": "pi-ez-worktree",
+  "version": "0.1.0",
+  "description": "A pi package that drops the current agent session into an isolated git worktree and merges it back when finished.",
+  "type": "module",
+  "keywords": ["pi-package", "pi", "git", "worktree"],
+  "license": "MIT",
+  "bin": {
+    "pi-wt-create": "./bin/pi-wt-create.mjs",
+    "pi-wt-status": "./bin/pi-wt-status.mjs",
+    "pi-wt-finish": "./bin/pi-wt-finish.mjs",
+    "pi-wt-abort": "./bin/pi-wt-abort.mjs"
+  },
+  "scripts": {
+    "check": "node --check extensions/git-worktree.js && node --check lib/git-worktree.js && node --check bin/_cli.mjs && node --check bin/pi-wt-create.mjs && node --check bin/pi-wt-status.mjs && node --check bin/pi-wt-finish.mjs && node --check bin/pi-wt-abort.mjs"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "pi": {
+    "extensions": ["./extensions"],
+    "skills": ["./skills"]
+  }
+}
