@@ -174,3 +174,19 @@ This repo includes a tiny `mise.toml` for a smoke check:
 ```bash
 mise run check
 ```
+
+## Release process
+
+This repository is set up for squash-merged PRs and automated semver bumps:
+
+- GitHub Actions runs CI on pushes and pull requests.
+- PR titles are checked for Conventional Commit style (`feat:`, `fix:`, `docs:`, etc.).
+- `release-please` watches `main` and opens a release PR that updates `package.json` and `CHANGELOG.md`.
+- Merge that release PR to create the next version tag and GitHub release.
+
+Semver mapping:
+- `fix:` => patch
+- `feat:` => minor
+- `feat!:` or `BREAKING CHANGE:` => major
+
+See [CHANGELOG.md](CHANGELOG.md) for released versions.

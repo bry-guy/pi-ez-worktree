@@ -1,7 +1,15 @@
 {
   "name": "pi-ez-worktree",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A pi package that drops the current agent session into an isolated git worktree and merges it back when finished.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bry-guy/pi-ez-worktree.git"
+  },
+  "homepage": "https://github.com/bry-guy/pi-ez-worktree#readme",
+  "bugs": {
+    "url": "https://github.com/bry-guy/pi-ez-worktree/issues"
+  },
   "type": "module",
   "keywords": ["pi-package", "pi", "git", "worktree"],
   "license": "MIT",
