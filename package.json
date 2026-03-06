@@ -7,12 +7,13 @@
   "license": "MIT",
   "bin": {
     "pi-wt-create": "./bin/pi-wt-create.mjs",
+    "pi-wt-attach": "./bin/pi-wt-attach.mjs",
     "pi-wt-status": "./bin/pi-wt-status.mjs",
     "pi-wt-finish": "./bin/pi-wt-finish.mjs",
     "pi-wt-abort": "./bin/pi-wt-abort.mjs"
   },
   "scripts": {
-    "check": "node --check extensions/git-worktree.js && node --check lib/git-worktree.js && node --check bin/_cli.mjs && node --check bin/pi-wt-create.mjs && node --check bin/pi-wt-status.mjs && node --check bin/pi-wt-finish.mjs && node --check bin/pi-wt-abort.mjs"
+    "check": "node --check extensions/git-worktree.js && node --check lib/git-worktree.js && node --check bin/_cli.mjs && node --check bin/pi-wt-create.mjs && node --check bin/pi-wt-attach.mjs && node --check bin/pi-wt-status.mjs && node --check bin/pi-wt-finish.mjs && node --check bin/pi-wt-abort.mjs"
   },
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",

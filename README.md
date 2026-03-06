@@ -14,7 +14,7 @@ This is designed for the workflow where you run multiple pi instances against th
 
 - **Extension:** overrides pi's built-in project tools so the current session transparently operates inside an active worktree
 - **Skill:** teaches the agent when to start the worktree flow from natural language
-- **CLI helpers:** small composable commands for create/status/finish/abort
+- **CLI helpers:** small composable commands for create/attach/status/finish/abort
 
 ## Install
 
@@ -28,9 +28,12 @@ Or try it without installing:
 pi -e git:github.com/bry-guy/pi-ez-worktree
 ```
 
+If pi is already running, install the package and then run `/reload` in that pi session. Otherwise just start a new pi session after installing.
+
 ## Commands
 
 - `/wt-start <name>` — create and attach a fresh worktree for this pi session
+- `/wt-attach [branch-or-path]` — attach this pi session to an existing worktree
 - `/wt-status` — show current worktree status
 - `/wt-finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
 - `/wt-abort [--force] [--keep-branch]` — remove the active worktree flow for this session
@@ -40,9 +43,21 @@ pi -e git:github.com/bry-guy/pi-ez-worktree
 The extension also exposes tools so the agent can act on natural language requests:
 
 - `worktree_begin`
+- `worktree_attach`
 - `worktree_status`
 - `worktree_finish`
 - `worktree_abort`
+
+## How attach works
+
+`/wt-attach` and `worktree_attach` accept either:
+
+- a branch name, like `pi/fix-login`
+- a worktree path, like `../.pi-worktrees/my-repo/fix-login`
+
+If you omit the target, attach succeeds only when there is exactly **one** attachable worktree for the repository. If there are several, the tool tells you which branches/paths are available so you can choose one explicitly.
+
+When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktree.json` metadata file inside that worktree. That lets a later pi session re-attach cleanly and recover the original base branch and main checkout.
 
 ## Default finish behavior
 
@@ -75,11 +90,12 @@ Relative project paths and shell commands are redirected into the worktree autom
 These are also shipped as small composable commands:
 
 - `pi-wt-create <name>`
+- `pi-wt-attach [branch-or-path]`
 - `pi-wt-status`
 - `pi-wt-finish`
 - `pi-wt-abort`
 
-`pi-wt-status`, `pi-wt-finish`, and `pi-wt-abort` accept state JSON via `--state-json` or stdin.
+`pi-wt-status`, `pi-wt-finish`, and `pi-wt-abort` accept state JSON via `--state-json` or stdin. `pi-wt-attach` discovers an existing worktree and prints state JSON for it.
 
 Example:
 
@@ -87,6 +103,52 @@ Example:
 STATE=$(pi-wt-create feature-foo | jq -c '.state')
 printf '%s\n' "$STATE" | pi-wt-status
 printf '%s\n' "$STATE" | pi-wt-finish --strategy auto
+```
+
+## Simple examples
+
+### Start a fresh isolated session
+
+Inside your repo:
+
+```text
+/wt-start bugfix-auth
+```
+
+Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`, `ls`, and `!bash` all target the worktree automatically.
+
+### Resume an existing worktree later
+
+If you kept a worktree around with `--no-cleanup`, open a new pi session in the main checkout and run:
+
+```text
+/wt-attach pi/bugfix-auth
+```
+
+or:
+
+```text
+/wt-attach ../.pi-worktrees/my-repo/bugfix-auth
+```
+
+If there is only one attachable worktree, this also works:
+
+```text
+/wt-attach
+```
+
+### Finish and merge back automatically
+
+```text
+/wt-finish
+```
+
+That defaults to `auto`: commit if needed, rebase in the worktree, fast-forward merge back into the base branch, then clean up.
+
+If you want to keep the worktree around after merging:
+
+```text
+/wt-finish --no-cleanup
 ```
 
 ## Notes

@@ -12,6 +12,7 @@ import { Type } from "@sinclair/typebox";
 import {
 	STATE_ENTRY_TYPE,
 	abortWorktree,
+	attachWorktree,
 	createUserBashOperations,
 	createWorktree,
 	finishWorktree,
@@ -25,6 +26,10 @@ import {
 
 const beginSchema = Type.Object({
 	name: Type.String({ description: "Human-friendly name for the new worktree branch" }),
+});
+
+const attachSchema = Type.Object({
+	target: Type.Optional(Type.String({ description: "Existing worktree branch name or path. Optional if there is only one attachable worktree." })),
 });
 
 const finishSchema = Type.Object({
@@ -99,6 +104,17 @@ export default function gitWorktreeExtension(pi) {
 			throw new Error(`This session is already attached to ${activeState.worktreePath}. Finish or abort it first.`);
 		}
 		const state = await createWorktree({ cwd: ctx.cwd, name: trimmed });
+		activeState = state;
+		persistState(state);
+		updateStatus(ctx);
+		return state;
+	}
+
+	async function attachFlow(ctx, target) {
+		if (activeState?.active) {
+			throw new Error(`This session is already attached to ${activeState.worktreePath}. Finish or abort it first.`);
+		}
+		const state = await attachWorktree({ cwd: ctx.cwd, target });
 		activeState = state;
 		persistState(state);
 		updateStatus(ctx);
@@ -225,6 +241,14 @@ export default function gitWorktreeExtension(pi) {
 		},
 	});
 
+	pi.registerCommand("wt-attach", {
+		description: "Attach this pi session to an existing git worktree",
+		handler: async (args, ctx) => {
+			const state = await attachFlow(ctx, args.trim() || undefined);
+			ctx.ui.notify(`Attached to existing worktree ${state.worktreePath} on ${state.taskBranch}`, "success");
+		},
+	});
+
 	pi.registerCommand("wt-status", {
 		description: "Show the active pi-ez-worktree status",
 		handler: async (_args, ctx) => {
@@ -275,6 +299,26 @@ export default function gitWorktreeExtension(pi) {
 						type: "text",
 						text: `Worktree ready at ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}). Future project tool calls in this session will use it automatically.`,
 					},
+				],
+				details: state,
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "worktree_attach",
+		label: "Worktree Attach",
+		description: "Attach the current pi session to an existing git worktree by branch name or path. If omitted, succeeds only when there is exactly one attachable worktree.",
+		promptSnippet: "Attach this session to an existing git worktree.",
+		promptGuidelines: [
+			"Use this when the user wants to resume or continue work in an already-created worktree.",
+		],
+		parameters: attachSchema,
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			const state = await attachFlow(ctx, params.target);
+			return {
+				content: [
+					{ type: "text", text: `Attached to ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}).` },
 				],
 				details: state,
 			};
