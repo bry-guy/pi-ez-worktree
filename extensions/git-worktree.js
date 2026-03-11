@@ -15,10 +15,14 @@ import {
 	attachWorktree,
 	createUserBashOperations,
 	createWorktree,
+	detachWorktree,
 	finishWorktree,
 	formatAttachableStatusText,
 	formatStatusBadge,
 	formatStatusText,
+	formatWorktreeCandidate,
+	formatWorktreeListText,
+	getWorktreeAttachTarget,
 	getEffectiveCwd,
 	getWorktreeStatus,
 	listAttachableWorktrees,
@@ -33,6 +37,10 @@ const beginSchema = Type.Object({
 const attachSchema = Type.Object({
 	target: Type.Optional(Type.String({ description: "Existing worktree branch name or path. Optional if there is only one attachable worktree." })),
 });
+
+const listSchema = Type.Object({});
+
+const detachSchema = Type.Object({});
 
 const finishSchema = Type.Object({
 	strategy: Type.Optional(StringEnum(["auto", "ff-only", "squash", "merge"])),
@@ -112,15 +120,39 @@ export default function gitWorktreeExtension(pi) {
 		return state;
 	}
 
+	async function chooseAttachTarget(ctx) {
+		const info = await listAttachableWorktrees(ctx.cwd);
+		if (info.candidates.length === 0) {
+			throw new Error("No attachable linked worktrees found for this repository.");
+		}
+		if (info.candidates.length === 1 || !ctx.hasUI) {
+			if (info.candidates.length === 1) return info.candidates[0].branch;
+			throw new Error(`${formatWorktreeListText(info)}\n\nRe-run /wt-attach with a branch or path.`);
+		}
+		const labels = info.candidates.map((candidate) => formatWorktreeCandidate(candidate));
+		const selected = await ctx.ui.select("Attach this session to which worktree?", labels);
+		if (!selected) {
+			throw new Error("Attach cancelled.");
+		}
+		const index = labels.indexOf(selected);
+		if (index === -1) throw new Error("Attach selection was not recognized.");
+		return getWorktreeAttachTarget(info.candidates[index]);
+	}
+
 	async function attachFlow(ctx, target) {
 		if (activeState?.active) {
 			throw new Error(`This session is already attached to ${activeState.worktreePath}. Finish or abort it first.`);
 		}
-		const state = await attachWorktree({ cwd: ctx.cwd, target });
+		const resolvedTarget = target?.trim() ? target.trim() : await chooseAttachTarget(ctx);
+		const state = await attachWorktree({ cwd: ctx.cwd, target: resolvedTarget });
 		activeState = state;
 		persistState(state);
 		updateStatus(ctx);
 		return state;
+	}
+
+	function listCwd(ctx) {
+		return activeState?.active ? activeState.worktreePath : ctx.cwd;
 	}
 
 	async function currentStatusText(ctx) {
@@ -131,6 +163,22 @@ export default function gitWorktreeExtension(pi) {
 		}
 		const status = await getWorktreeStatus(activeState);
 		return formatStatusText(activeState, status);
+	}
+
+	async function listText(ctx) {
+		const info = await listAttachableWorktrees(listCwd(ctx)).catch(() => undefined);
+		if (!info) return "No linked worktrees found for this repository.";
+		return formatWorktreeListText(info);
+	}
+
+	async function detachFlow(ctx) {
+		if (!activeState?.active) {
+			return { status: "blocked", message: "No active worktree flow for this session." };
+		}
+		const result = detachWorktree(activeState);
+		clearState();
+		updateStatus(ctx);
+		return result;
 	}
 
 	async function finishFlow(ctx, options = {}) {
@@ -255,6 +303,21 @@ export default function gitWorktreeExtension(pi) {
 		},
 	});
 
+	pi.registerCommand("wt-detach", {
+		description: "Detach this pi session from its active worktree without deleting it",
+		handler: async (_args, ctx) => {
+			const result = await detachFlow(ctx);
+			ctx.ui.notify(result.message, result.status === "success" ? "success" : "warning");
+		},
+	});
+
+	pi.registerCommand("wt-list", {
+		description: "List linked worktrees for this repository",
+		handler: async (_args, ctx) => {
+			ctx.ui.notify(await listText(ctx), "info");
+		},
+	});
+
 	pi.registerCommand("wt-status", {
 		description: "Show the active pi-ez-worktree status or attachable candidates",
 		handler: async (_args, ctx) => {
@@ -314,7 +377,7 @@ export default function gitWorktreeExtension(pi) {
 	pi.registerTool({
 		name: "worktree_attach",
 		label: "Worktree Attach",
-		description: "Attach the current pi session to an existing git worktree by branch name or path. If omitted, succeeds only when there is exactly one attachable worktree.",
+		description: "Attach the current pi session to an existing git worktree by branch name or path. If omitted, interactive sessions prompt you to pick one and non-interactive sessions require the target when multiple worktrees exist.",
 		promptSnippet: "Attach this session to an existing git worktree.",
 		promptGuidelines: [
 			"Use this when the user wants to resume or continue work in an already-created worktree.",
@@ -327,6 +390,36 @@ export default function gitWorktreeExtension(pi) {
 					{ type: "text", text: `Attached to ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}).` },
 				],
 				details: state,
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "worktree_detach",
+		label: "Worktree Detach",
+		description: "Detach the current pi session from its active worktree without deleting the worktree or branch.",
+		promptSnippet: "Detach this session from its active worktree but keep the worktree around.",
+		parameters: detachSchema,
+		async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
+			const result = await detachFlow(ctx);
+			return {
+				content: [{ type: "text", text: result.message }],
+				details: result,
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "worktree_list",
+		label: "Worktree List",
+		description: "List linked worktrees for this repository, marking the current checkout when relevant.",
+		promptSnippet: "List linked worktrees for the repository.",
+		parameters: listSchema,
+		async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
+			const info = await listAttachableWorktrees(listCwd(ctx));
+			return {
+				content: [{ type: "text", text: formatWorktreeListText(info) }],
+				details: info,
 			};
 		},
 	});

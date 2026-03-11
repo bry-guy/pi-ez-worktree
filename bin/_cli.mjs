@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-
 export function parseArgs(argv) {
 	const args = { _: [] };
 	for (let index = 0; index < argv.length; index += 1) {
@@ -26,10 +24,22 @@ export function asBoolean(value, fallback) {
 	return !["false", "0", "no"].includes(String(value).toLowerCase());
 }
 
+async function readStdinText() {
+	return await new Promise((resolve, reject) => {
+		let data = "";
+		process.stdin.setEncoding("utf8");
+		process.stdin.on("data", (chunk) => {
+			data += chunk;
+		});
+		process.stdin.on("end", () => resolve(data));
+		process.stdin.on("error", reject);
+	});
+}
+
 export async function readStateInput(args) {
 	if (args["state-json"]) return JSON.parse(args["state-json"]);
 	if (!process.stdin.isTTY) {
-		const input = (await readFile(process.stdin.fd, "utf8")).trim();
+		const input = (await readStdinText()).trim();
 		if (input) return JSON.parse(input);
 	}
 	throw new Error("Provide worktree state via --state-json or stdin.");

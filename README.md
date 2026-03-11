@@ -14,7 +14,7 @@ This is designed for the workflow where you run multiple pi instances against th
 
 - **Extension:** overrides pi's built-in project tools so the current session transparently operates inside an active worktree
 - **Skill:** teaches the agent when to start the worktree flow from natural language
-- **CLI helpers:** small composable commands for create/attach/status/finish/abort
+- **CLI helpers:** small composable commands for create/attach/detach/list/status/finish/abort
 
 ## Install
 
@@ -33,7 +33,9 @@ If pi is already running, install the package and then run `/reload` in that pi 
 ## Commands
 
 - `/wt-start <name>` — create and attach a fresh worktree for this pi session
-- `/wt-attach [branch-or-path]` — attach this pi session to an existing worktree
+- `/wt-attach [branch-or-path]` — attach this pi session to an existing worktree; when omitted in interactive mode, pi prompts you to choose
+- `/wt-detach` — detach this pi session from its active worktree without deleting the worktree
+- `/wt-list` — list linked worktrees for this repository
 - `/wt-status` — show current worktree status, or list attachable worktrees when none is active
 - `/wt-finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
 - `/wt-abort [--force] [--keep-branch]` — remove the active worktree flow for this session
@@ -44,6 +46,8 @@ The extension also exposes tools so the agent can act on natural language reques
 
 - `worktree_begin`
 - `worktree_attach`
+- `worktree_detach`
+- `worktree_list`
 - `worktree_status`
 - `worktree_finish`
 - `worktree_abort`
@@ -55,7 +59,11 @@ The extension also exposes tools so the agent can act on natural language reques
 - a branch name, like `pi/fix-login`
 - a worktree path, like `../.pi-worktrees/my-repo/fix-login`
 
-If you omit the target, attach succeeds only when there is exactly **one** attachable worktree for the repository. If there are several, the tool tells you which branches/paths are available so you can choose one explicitly.
+If you omit the target, attach behaves like this:
+
+- in interactive pi, it opens a picker when more than one attachable worktree exists
+- in non-interactive mode, it succeeds only when there is exactly **one** attachable worktree
+- otherwise it tells you which branches/paths are available so you can choose one explicitly
 
 When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktree.json` metadata file inside that worktree. That lets a later pi session re-attach cleanly and recover the original base branch and main checkout. The package also adds that file to the worktree's local git exclude list so it does not pollute status or get committed.
 
@@ -91,11 +99,13 @@ These are also shipped as small composable commands:
 
 - `pi-wt-create <name>`
 - `pi-wt-attach [branch-or-path]`
+- `pi-wt-detach`
+- `pi-wt-list`
 - `pi-wt-status`
 - `pi-wt-finish`
 - `pi-wt-abort`
 
-`pi-wt-status`, `pi-wt-finish`, and `pi-wt-abort` accept state JSON via `--state-json` or stdin. `pi-wt-attach` discovers an existing worktree and prints state JSON for it.
+`pi-wt-status`, `pi-wt-finish`, `pi-wt-abort`, and `pi-wt-detach` accept state JSON via `--state-json` or stdin. `pi-wt-attach` discovers an existing worktree and prints state JSON for it. `pi-wt-list` prints linked worktrees for the current repository.
 
 Example:
 
@@ -117,9 +127,15 @@ Inside your repo:
 
 Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`, `ls`, and `!bash` all target the worktree automatically.
 
-### See what can be attached
+### See what is available
 
-If no worktree is active for the current session, run:
+To list linked worktrees for the repo:
+
+```text
+/wt-list
+```
+
+If no worktree is active for the current session, this also works:
 
 ```text
 /wt-status
@@ -147,6 +163,18 @@ If there is only one attachable worktree, this also works:
 /wt-attach
 ```
 
+If there are multiple and you're in interactive pi, omitting the argument opens a picker so you can choose one directly.
+
+### Temporarily leave the active worktree attached state
+
+If you want to stop routing this session into the worktree without deleting the worktree itself:
+
+```text
+/wt-detach
+```
+
+You can later re-attach with `/wt-attach`.
+
 ### Finish and merge back automatically
 
 ```text
@@ -166,6 +194,7 @@ If you want to keep the worktree around after merging:
 - The package expects you to start from a normal named git branch, not detached HEAD.
 - The original checkout must remain clean when finishing a worktree.
 - The package is optimized for local branch isolation, not remote PR orchestration.
+- Current limitation: pi's built-in `@` file picker and path autocomplete still use pi's original process cwd, not the active ez-worktree. The extension can redirect tools and bash execution, but pi does not currently expose a clean API to retarget the editor's autocomplete root.
 
 ## Local development
 
