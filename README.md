@@ -32,13 +32,16 @@ If pi is already running, install the package and then run `/reload` in that pi 
 
 ## Commands
 
-- `/wt-start <name>` — create and attach a fresh worktree for this pi session
-- `/wt-attach [branch-or-path]` — attach this pi session to an existing worktree; when omitted in interactive mode, pi prompts you to choose
-- `/wt-detach` — detach this pi session from its active worktree without deleting the worktree
-- `/wt-list` — list linked worktrees for this repository
-- `/wt-status` — show current worktree status, or list attachable worktrees when none is active
-- `/wt-finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
-- `/wt-abort [--force] [--keep-branch]` — remove the active worktree flow for this session
+v2 uses a single slash command with subcommands. Subcommand and common flag completion is built in:
+
+- `/ezwt start <name>` — create and attach a fresh worktree for this pi session
+- `/ezwt attach [branch-or-path]` — attach this pi session to an existing worktree; when omitted in interactive mode, pi prompts you to choose
+- `/ezwt detach` — detach this pi session from its active worktree without deleting the worktree
+- `/ezwt list` — list linked worktrees for this repository
+- `/ezwt status` — show current worktree status, or list attachable worktrees when none is active
+- `/ezwt finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
+- `/ezwt abort [--force] [--keep-branch]` — remove the active worktree flow for this session
+- `/ezwt help [subcommand]` — show help and usage details
 
 ## Agent tools
 
@@ -54,7 +57,7 @@ The extension also exposes tools so the agent can act on natural language reques
 
 ## How attach works
 
-`/wt-attach` and `worktree_attach` accept either:
+`/ezwt attach` and `worktree_attach` accept either:
 
 - a branch name, like `pi/fix-login`
 - a worktree path, like `../.pi-worktrees/my-repo/fix-login`
@@ -122,7 +125,7 @@ printf '%s\n' "$STATE" | pi-wt-finish --strategy auto
 Inside your repo:
 
 ```text
-/wt-start bugfix-auth
+/ezwt start bugfix-auth
 ```
 
 Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`, `ls`, and `!bash` all target the worktree automatically.
@@ -132,35 +135,35 @@ Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`
 To list linked worktrees for the repo:
 
 ```text
-/wt-list
+/ezwt list
 ```
 
 If no worktree is active for the current session, this also works:
 
 ```text
-/wt-status
+/ezwt status
 ```
 
-It will list attachable worktrees and suggest `/wt-attach` usage.
+It will list attachable worktrees and suggest `/ezwt attach` usage.
 
 ### Resume an existing worktree later
 
 If you kept a worktree around with `--no-cleanup`, open a new pi session in the main checkout and run:
 
 ```text
-/wt-attach pi/bugfix-auth
+/ezwt attach pi/bugfix-auth
 ```
 
 or:
 
 ```text
-/wt-attach ../.pi-worktrees/my-repo/bugfix-auth
+/ezwt attach ../.pi-worktrees/my-repo/bugfix-auth
 ```
 
 If there is only one attachable worktree, this also works:
 
 ```text
-/wt-attach
+/ezwt attach
 ```
 
 If there are multiple and you're in interactive pi, omitting the argument opens a picker so you can choose one directly.
@@ -170,15 +173,15 @@ If there are multiple and you're in interactive pi, omitting the argument opens 
 If you want to stop routing this session into the worktree without deleting the worktree itself:
 
 ```text
-/wt-detach
+/ezwt detach
 ```
 
-You can later re-attach with `/wt-attach`.
+You can later re-attach with `/ezwt attach`.
 
 ### Finish and merge back automatically
 
 ```text
-/wt-finish
+/ezwt finish
 ```
 
 That defaults to `auto`: commit if needed, rebase in the worktree, fast-forward merge back into the base branch, then clean up.
@@ -186,7 +189,7 @@ That defaults to `auto`: commit if needed, rebase in the worktree, fast-forward 
 If you want to keep the worktree around after merging:
 
 ```text
-/wt-finish --no-cleanup
+/ezwt finish --no-cleanup
 ```
 
 ## Notes
