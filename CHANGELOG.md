@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/bry-guy/pi-ez-worktree/compare/v1.0.0...v2.0.0) (2026-03-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* replace /wt-* slash commands with /ezwt
+
+### Features
+
+* add detach and list worktree commands ([9a14bb4](https://github.com/bry-guy/pi-ez-worktree/commit/9a14bb4483f32afeb9cd40025962c9f0a6a06389))
+* replace /wt-* slash commands with /ezwt ([a7c083d](https://github.com/bry-guy/pi-ez-worktree/commit/a7c083d88e092b93a41de7c86f6722893c0e2735))
+
 ## [1.0.0] - 2026-03-05
 
 ### Added
