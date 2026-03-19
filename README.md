@@ -96,6 +96,32 @@ When a worktree is active, the extension overrides:
 
 Relative project paths and shell commands are redirected into the worktree automatically. Absolute paths outside the repository are left alone.
 
+This is an **effective cwd** / tool-routing layer, not a full process cwd change:
+
+- `pi-ez-worktree` does **not** move the running pi process into the worktree
+- it does **not** rewrite pi's session header cwd to the worktree path
+- it does **not** retarget pi's built-in picker/autocomplete root today
+- it **does** route the tools above and user `!bash` into the active worktree
+
+That distinction matters when you compose this package with other extensions.
+
+## Composition / integration contract
+
+If you are building another extension that creates, resumes, or delegates work into sessions:
+
+- Treat `pi-ez-worktree` as a **routing primitive**, not a session-relocation primitive.
+- Do **not** assume the active worktree path is the same as pi's real session cwd.
+- Do **not** assume a child session should be started with its cwd set directly to the worktree path.
+- Prefer keeping the child session rooted at the user's requested/original repo path and then restoring ez-worktree routing state for that session.
+
+Why this is the safer default:
+
+- cleanup stays easier to reason about
+- `git worktree remove` / branch cleanup are less likely to fight a still-live session rooted inside the worktree
+- users are less likely to confuse "session cwd" with "effective worktree cwd"
+
+Starting a child session directly inside the worktree can still be a valid advanced choice, but integrators should treat it as **opt-in behavior with tradeoffs**, not as the default meaning of ez-worktree.
+
 ## CLI helpers
 
 These are also shipped as small composable commands:
@@ -198,6 +224,7 @@ If you want to keep the worktree around after merging:
 - The original checkout must remain clean when finishing a worktree.
 - The package is optimized for local branch isolation, not remote PR orchestration.
 - Current limitation: pi's built-in `@` file picker and path autocomplete still use pi's original process cwd, not the active ez-worktree. The extension can redirect tools and bash execution, but pi does not currently expose a clean API to retarget the editor's autocomplete root.
+- For extension authors: if you want delegated/forked workers to use ez-worktree, prefer restoring routing state over relocating the worker session cwd into the worktree itself.
 
 ## Local development
 
