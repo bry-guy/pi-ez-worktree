@@ -272,6 +272,7 @@ function formatEzwtHelp(subcommand) {
 
 export default function gitWorktreeExtension(pi) {
 	let activeState;
+	let projectToolOverridesRegistered = false;
 
 	function restoreState(ctx) {
 		activeState = readStateFromEntries(ctx.sessionManager.getBranch());
@@ -303,6 +304,7 @@ export default function gitWorktreeExtension(pi) {
 		}
 		const state = await createWorktree({ cwd: ctx.cwd, name: trimmed });
 		activeState = state;
+		ensureProjectToolOverridesRegistered();
 		persistState(state);
 		updateStatus(ctx);
 		return state;
@@ -334,6 +336,7 @@ export default function gitWorktreeExtension(pi) {
 		const resolvedTarget = target?.trim() ? target.trim() : await chooseAttachTarget(ctx);
 		const state = await attachWorktree({ cwd: ctx.cwd, target: resolvedTarget });
 		activeState = state;
+		ensureProjectToolOverridesRegistered();
 		persistState(state);
 		updateStatus(ctx);
 		return state;
@@ -411,40 +414,47 @@ export default function gitWorktreeExtension(pi) {
 		});
 	}
 
-	registerWrappedTool(createReadTool, { pathKey: "path" });
-	registerWrappedTool(createWriteTool, { pathKey: "path" });
-	registerWrappedTool(createEditTool, { pathKey: "path" });
-	registerWrappedTool(createGrepTool, { pathKey: "path" });
-	registerWrappedTool(createFindTool, { pathKey: "path" });
-	registerWrappedTool(createLsTool, { pathKey: "path" });
-	registerWrappedTool(createBashTool, {
-		makeTool: (effectiveCwd) =>
-			createBashTool(effectiveCwd, {
-				spawnHook: ({ command, cwd, env }) => ({
-					command,
-					cwd,
-					env: {
-						...env,
-						PI_EZ_WORKTREE_CWD: effectiveCwd,
-						PI_EZ_WORKTREE_ACTIVE: activeState?.active ? "1" : "0",
-						PI_EZ_WORKTREE_BRANCH: activeState?.taskBranch ?? "",
-					},
+	function ensureProjectToolOverridesRegistered() {
+		if (projectToolOverridesRegistered) return;
+		projectToolOverridesRegistered = true;
+		registerWrappedTool(createReadTool, { pathKey: "path" });
+		registerWrappedTool(createWriteTool, { pathKey: "path" });
+		registerWrappedTool(createEditTool, { pathKey: "path" });
+		registerWrappedTool(createGrepTool, { pathKey: "path" });
+		registerWrappedTool(createFindTool, { pathKey: "path" });
+		registerWrappedTool(createLsTool, { pathKey: "path" });
+		registerWrappedTool(createBashTool, {
+			makeTool: (effectiveCwd) =>
+				createBashTool(effectiveCwd, {
+					spawnHook: ({ command, cwd, env }) => ({
+						command,
+						cwd,
+						env: {
+							...env,
+							PI_EZ_WORKTREE_CWD: effectiveCwd,
+							PI_EZ_WORKTREE_ACTIVE: activeState?.active ? "1" : "0",
+							PI_EZ_WORKTREE_BRANCH: activeState?.taskBranch ?? "",
+						},
+					}),
 				}),
-			}),
-	});
+		});
+	}
 
 	pi.on("session_start", async (_event, ctx) => {
 		restoreState(ctx);
+		if (activeState?.active) ensureProjectToolOverridesRegistered();
 		updateStatus(ctx);
 	});
 
 	pi.on("session_tree", async (_event, ctx) => {
 		restoreState(ctx);
+		if (activeState?.active) ensureProjectToolOverridesRegistered();
 		updateStatus(ctx);
 	});
 
 	pi.on("session_fork", async (_event, ctx) => {
 		restoreState(ctx);
+		if (activeState?.active) ensureProjectToolOverridesRegistered();
 		updateStatus(ctx);
 	});
 
