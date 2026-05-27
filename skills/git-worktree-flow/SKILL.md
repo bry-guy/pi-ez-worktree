@@ -30,7 +30,7 @@ Use the `worktree_*` tools from the pi-ez-worktree package instead of manually j
 7. When the user asks to wrap up, call `worktree_finish`.
 
 ## Notes
-- `/ezwt <subcommand>` is the user-facing slash command. Common subcommands are `start`, `attach`, `detach`, `list`, `status`, `finish`, `abort`, and `help`.
-- When you suggest commands to the user, use `/ezwt ...` forms and do not suggest the older `/wt-*` command names.
-- If the user asks what is available, point them to `/ezwt help` or the relevant `/ezwt help <subcommand>` output.
+- `/worktree <subcommand>` is the user-facing slash command. Common subcommands are `start`, `attach`, `detach`, `list`, `status`, `finish`, `abort`, and `help`.
+- When you suggest commands to the user, use `/worktree ...` forms and do not suggest the older `/ezwt` or `/wt-*` command names.
+- If the user asks what is available, point them to `/worktree help` or the relevant `/worktree help <subcommand>` output.
 - The extension handles the actual tool routing; do not try to manually keep track of alternate directories in your own reasoning.

@@ -57,42 +57,42 @@ const EZWT_SUBCOMMANDS = [
 	{
 		name: "start",
 		description: "Create and attach this pi session to a fresh git worktree",
-		usage: "/ezwt start <name>",
+		usage: "/worktree start <name>",
 	},
 	{
 		name: "attach",
 		description: "Attach this pi session to an existing git worktree",
-		usage: "/ezwt attach [branch-or-path]",
+		usage: "/worktree attach [branch-or-path]",
 	},
 	{
 		name: "detach",
 		description: "Detach this pi session from its active worktree without deleting it",
-		usage: "/ezwt detach",
+		usage: "/worktree detach",
 	},
 	{
 		name: "list",
 		description: "List linked worktrees for this repository",
-		usage: "/ezwt list",
+		usage: "/worktree list",
 	},
 	{
 		name: "status",
 		description: "Show the active pi-ez-worktree status or attachable candidates",
-		usage: "/ezwt status",
+		usage: "/worktree status",
 	},
 	{
 		name: "finish",
 		description: "Commit, merge, and optionally clean up the active worktree",
-		usage: "/ezwt finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]",
+		usage: "/worktree finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]",
 	},
 	{
 		name: "abort",
 		description: "Discard the active worktree flow for this session",
-		usage: "/ezwt abort [--force] [--keep-branch]",
+		usage: "/worktree abort [--force] [--keep-branch]",
 	},
 	{
 		name: "help",
-		description: "Show help for ezwt or one of its subcommands",
-		usage: "/ezwt help [subcommand]",
+		description: "Show help for worktree or one of its subcommands",
+		usage: "/worktree help [subcommand]",
 	},
 ];
 
@@ -209,7 +209,7 @@ function getEzwtArgumentCompletions(argumentPrefix) {
 				{ value: "--strategy ", label: "--strategy", description: "Merge strategy: auto, ff-only, squash, or merge" },
 				{ value: "--cleanup ", label: "--cleanup", description: "Explicitly remove the worktree after a successful finish" },
 				{ value: "--no-cleanup", label: "--no-cleanup", description: "Keep the worktree after a successful finish" },
-				{ value: "--help", label: "--help", description: "Show help for ezwt finish" },
+				{ value: "--help", label: "--help", description: "Show help for worktree finish" },
 			]);
 		}
 	}
@@ -219,12 +219,12 @@ function getEzwtArgumentCompletions(argumentPrefix) {
 			{ value: "--force", label: "--force", description: "Discard uncommitted work if necessary" },
 			{ value: "--keep-branch", label: "--keep-branch", description: "Keep the worktree branch after aborting" },
 			{ value: "--delete-branch", label: "--delete-branch", description: "Explicitly delete the worktree branch after aborting" },
-			{ value: "--help", label: "--help", description: "Show help for ezwt abort" },
+			{ value: "--help", label: "--help", description: "Show help for worktree abort" },
 		]);
 	}
 
 	if ((subcommand === "start" || subcommand === "attach") && (!current || current.startsWith("--"))) {
-		return filterCompletionItems(current, [{ value: "--help", label: "--help", description: `Show help for ezwt ${subcommand}` }]);
+		return filterCompletionItems(current, [{ value: "--help", label: "--help", description: `Show help for worktree ${subcommand}` }]);
 	}
 
 	return null;
@@ -233,25 +233,25 @@ function getEzwtArgumentCompletions(argumentPrefix) {
 function formatEzwtHelp(subcommand) {
 	const command = subcommand ? EZWT_SUBCOMMANDS.find((entry) => entry.name === subcommand) : undefined;
 	if (subcommand && !command) {
-		return `Unknown ezwt subcommand "${subcommand}".\n\n${formatEzwtHelp()}`;
+		return `Unknown worktree subcommand "${subcommand}".\n\n${formatEzwtHelp()}`;
 	}
 	if (!command) {
 		return [
-			"Usage: /ezwt <subcommand> [args]",
+			"Usage: /worktree <subcommand> [args]",
 			"",
 			"Subcommands:",
 			...EZWT_SUBCOMMANDS.filter((entry) => entry.name !== "help").map(
 				(entry) => `- ${entry.name}: ${entry.description}`,
 			),
-			"- help: Show help for ezwt or one of its subcommands",
+			"- help: Show help for worktree or one of its subcommands",
 			"",
 			"Examples:",
-			"- /ezwt start bugfix-auth",
-			"- /ezwt attach",
-			"- /ezwt attach pi/bugfix-auth",
-			"- /ezwt finish --no-cleanup",
+			"- /worktree start bugfix-auth",
+			"- /worktree attach",
+			"- /worktree attach pi/bugfix-auth",
+			"- /worktree finish --no-cleanup",
 			"",
-			"Run /ezwt help <subcommand> for details.",
+			"Run /worktree help <subcommand> for details.",
 		].join("\n");
 	}
 	const lines = [command.usage, "", command.description];
@@ -265,7 +265,7 @@ function formatEzwtHelp(subcommand) {
 		lines.push("", "Flags:", "- --force", "- --keep-branch", "- --delete-branch");
 	}
 	if (command.name === "help") {
-		lines.push("", "Example:", "- /ezwt help finish");
+		lines.push("", "Example:", "- /worktree help finish");
 	}
 	return lines.join("\n");
 }
@@ -319,7 +319,7 @@ export default function gitWorktreeExtension(pi) {
 
 	async function startFlow(ctx, name) {
 		const trimmed = name?.trim();
-		if (!trimmed) throw new Error("Usage: /ezwt start <name>");
+		if (!trimmed) throw new Error("Usage: /worktree start <name>");
 		if (activeState?.active) {
 			throw new Error(`This session is already attached to ${activeState.worktreePath}. Finish or abort it first.`);
 		}
@@ -338,7 +338,7 @@ export default function gitWorktreeExtension(pi) {
 		}
 		if (info.candidates.length === 1 || !ctx.hasUI) {
 			if (info.candidates.length === 1) return info.candidates[0].branch;
-			throw new Error(`${formatWorktreeListText(info)}\n\nRe-run /ezwt attach with a branch or path.`);
+			throw new Error(`${formatWorktreeListText(info)}\n\nRe-run /worktree attach with a branch or path.`);
 		}
 		const labels = info.candidates.map((candidate) => formatWorktreeCandidate(candidate));
 		const selected = await ctx.ui.select("Attach this session to which worktree?", labels);
@@ -485,7 +485,7 @@ export default function gitWorktreeExtension(pi) {
 		return {
 			systemPrompt:
 				event.systemPrompt +
-				`\n\nActive git worktree: ${activeState.worktreePath} on branch ${activeState.taskBranch} based on ${activeState.baseBranch}. All project file edits and bash commands for this session must stay in that worktree. Finish by using the worktree finish tool or /ezwt finish.`,
+				`\n\nActive git worktree: ${activeState.worktreePath} on branch ${activeState.taskBranch} based on ${activeState.baseBranch}. All project file edits and bash commands for this session must stay in that worktree. Finish by using the worktree finish tool or /worktree finish.`,
 		};
 	});
 
@@ -572,23 +572,23 @@ export default function gitWorktreeExtension(pi) {
 		}
 	}
 
-	pi.registerCommand("ezwt", {
+	pi.registerCommand("worktree", {
 		description: "Manage this session's pi-ez-worktree flow",
 		getArgumentCompletions: getEzwtArgumentCompletions,
 		handler: handleEzwtCommand,
 	});
 
 	pi.on("input", async (event, ctx) => {
-		const match = matchSlashCommand(event.text, ["ezwt"]);
+		const match = matchSlashCommand(event.text, ["worktree"]);
 		if (!match) return { action: "continue" };
 		const messages = [];
 		const remoteCtx = { ...ctx, ui: { ...ctx.ui, notify: (message, level = "info") => messages.push({ message, level }) } };
 		try {
 			await handleEzwtCommand(match.args, remoteCtx);
-			const text = messages.map((m) => m.message).join("\n\n") || "/ezwt completed.";
-			return { action: "transform", text: `The remote /ezwt command completed. Reply to the user with this result exactly:\n\n${text}` };
+			const text = messages.map((m) => m.message).join("\n\n") || "/worktree completed.";
+			return { action: "transform", text: `The remote /worktree command completed. Reply to the user with this result exactly:\n\n${text}` };
 		} catch (error) {
-			return { action: "transform", text: `The remote /ezwt command failed. Reply to the user with this error:\n\n${error instanceof Error ? error.message : String(error)}` };
+			return { action: "transform", text: `The remote /worktree command failed. Reply to the user with this error:\n\n${error instanceof Error ? error.message : String(error)}` };
 		}
 	});
 

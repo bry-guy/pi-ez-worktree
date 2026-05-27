@@ -47,7 +47,7 @@ This remains the default for normal local pi sessions.
 
 For pi-chat and other sandboxed sessions:
 
-- detect that project tools are already delegated to a sandbox, or let the user opt in with `/ezwt start --mode gondolin`
+- detect that project tools are already delegated to a sandbox, or let the user opt in with `/worktree start --mode gondolin`
 - copy the current `/workspace` tree to an ephemeral directory inside the VM, e.g. `/tmp/pi-ez-worktrees/<name>`
 - route tools to that in-VM path
 - finish by producing a patch/bundle/artifact that can be applied back to `/workspace` or the host checkout
@@ -107,7 +107,7 @@ Start with **Gondolin copy mode** because it gives the ephemeral semantics we wa
 4. Add explicit mode selection:
 
    ```text
-   /ezwt start <name> --mode host|gondolin-copy|auto
+   /worktree start <name> --mode host|gondolin-copy|auto
    ```
 
    `auto` should prefer Gondolin when it detects pi-chat/sandbox context.

@@ -34,14 +34,14 @@ If pi is already running, install the package and then run `/reload` in that pi 
 
 v2 uses a single slash command with subcommands. Subcommand and common flag completion is built in:
 
-- `/ezwt start <name>` — create and attach a fresh worktree for this pi session
-- `/ezwt attach [branch-or-path]` — attach this pi session to an existing worktree; when omitted in interactive mode, pi prompts you to choose
-- `/ezwt detach` — detach this pi session from its active worktree without deleting the worktree
-- `/ezwt list` — list linked worktrees for this repository
-- `/ezwt status` — show current worktree status, or list attachable worktrees when none is active
-- `/ezwt finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
-- `/ezwt abort [--force] [--keep-branch]` — remove the active worktree flow for this session
-- `/ezwt help [subcommand]` — show help and usage details
+- `/worktree start <name>` — create and attach a fresh worktree for this pi session
+- `/worktree attach [branch-or-path]` — attach this pi session to an existing worktree; when omitted in interactive mode, pi prompts you to choose
+- `/worktree detach` — detach this pi session from its active worktree without deleting the worktree
+- `/worktree list` — list linked worktrees for this repository
+- `/worktree status` — show current worktree status, or list attachable worktrees when none is active
+- `/worktree finish [--strategy auto|ff-only|squash|merge] [--no-cleanup] [commit message]` — commit if needed, merge back, and optionally keep the worktree around
+- `/worktree abort [--force] [--keep-branch]` — remove the active worktree flow for this session
+- `/worktree help [subcommand]` — show help and usage details
 
 ## Agent tools
 
@@ -57,7 +57,7 @@ The extension also exposes tools so the agent can act on natural language reques
 
 ## How attach works
 
-`/ezwt attach` and `worktree_attach` accept either:
+`/worktree attach` and `worktree_attach` accept either:
 
 - a branch name, like `pi/fix-login`
 - a worktree path, like `../.pi-worktrees/my-repo/fix-login`
@@ -151,7 +151,7 @@ printf '%s\n' "$STATE" | pi-wt-finish --strategy auto
 Inside your repo:
 
 ```text
-/ezwt start bugfix-auth
+/worktree start bugfix-auth
 ```
 
 Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`, `ls`, and `!bash` all target the worktree automatically.
@@ -161,35 +161,35 @@ Then just keep working normally. `bash`, `read`, `write`, `edit`, `grep`, `find`
 To list linked worktrees for the repo:
 
 ```text
-/ezwt list
+/worktree list
 ```
 
 If no worktree is active for the current session, this also works:
 
 ```text
-/ezwt status
+/worktree status
 ```
 
-It will list attachable worktrees and suggest `/ezwt attach` usage.
+It will list attachable worktrees and suggest `/worktree attach` usage.
 
 ### Resume an existing worktree later
 
 If you kept a worktree around with `--no-cleanup`, open a new pi session in the main checkout and run:
 
 ```text
-/ezwt attach pi/bugfix-auth
+/worktree attach pi/bugfix-auth
 ```
 
 or:
 
 ```text
-/ezwt attach ../.pi-worktrees/my-repo/bugfix-auth
+/worktree attach ../.pi-worktrees/my-repo/bugfix-auth
 ```
 
 If there is only one attachable worktree, this also works:
 
 ```text
-/ezwt attach
+/worktree attach
 ```
 
 If there are multiple and you're in interactive pi, omitting the argument opens a picker so you can choose one directly.
@@ -199,15 +199,15 @@ If there are multiple and you're in interactive pi, omitting the argument opens 
 If you want to stop routing this session into the worktree without deleting the worktree itself:
 
 ```text
-/ezwt detach
+/worktree detach
 ```
 
-You can later re-attach with `/ezwt attach`.
+You can later re-attach with `/worktree attach`.
 
 ### Finish and merge back automatically
 
 ```text
-/ezwt finish
+/worktree finish
 ```
 
 That defaults to `auto`: commit if needed, rebase in the worktree, fast-forward merge back into the base branch, then clean up.
@@ -215,7 +215,7 @@ That defaults to `auto`: commit if needed, rebase in the worktree, fast-forward 
 If you want to keep the worktree around after merging:
 
 ```text
-/ezwt finish --no-cleanup
+/worktree finish --no-cleanup
 ```
 
 ## Notes
