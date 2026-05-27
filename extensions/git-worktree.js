@@ -270,6 +270,27 @@ function formatEzwtHelp(subcommand) {
 	return lines.join("\n");
 }
 
+function stripLeadingMention(text) {
+	let rest = String(text ?? "").trimStart();
+	while (true) {
+		const next = rest.replace(/^(?:<@!?\d+>|<@&\d+>|@[\w.-]+)\s*/u, "");
+		if (next === rest) return rest;
+		rest = next.trimStart();
+	}
+}
+
+function matchSlashCommand(text, aliases) {
+	const stripped = stripLeadingMention(text);
+	for (const alias of aliases) {
+		const command = `/${alias}`;
+		if (stripped === command) return { name: alias, args: "" };
+		if (stripped.startsWith(`${command} `) || stripped.startsWith(`${command}\n`) || stripped.startsWith(`${command}\t`)) {
+			return { name: alias, args: stripped.slice(command.length).trim() };
+		}
+	}
+	return undefined;
+}
+
 export default function gitWorktreeExtension(pi) {
 	let activeState;
 	let projectToolOverridesRegistered = false;
@@ -555,6 +576,20 @@ export default function gitWorktreeExtension(pi) {
 		description: "Manage this session's pi-ez-worktree flow",
 		getArgumentCompletions: getEzwtArgumentCompletions,
 		handler: handleEzwtCommand,
+	});
+
+	pi.on("input", async (event, ctx) => {
+		const match = matchSlashCommand(event.text, ["ezwt"]);
+		if (!match) return { action: "continue" };
+		const messages = [];
+		const remoteCtx = { ...ctx, ui: { ...ctx.ui, notify: (message, level = "info") => messages.push({ message, level }) } };
+		try {
+			await handleEzwtCommand(match.args, remoteCtx);
+			const text = messages.map((m) => m.message).join("\n\n") || "/ezwt completed.";
+			return { action: "transform", text: `The remote /ezwt command completed. Reply to the user with this result exactly:\n\n${text}` };
+		} catch (error) {
+			return { action: "transform", text: `The remote /ezwt command failed. Reply to the user with this error:\n\n${error instanceof Error ? error.message : String(error)}` };
+		}
 	});
 
 	pi.registerTool({
