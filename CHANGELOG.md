@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/bry-guy/pi-ez-worktree/compare/v1.0.1...v1.1.0) (2026-06-02)
+
+
+### Features
+
+* add worktree include config ([75f7b07](https://github.com/bry-guy/pi-ez-worktree/commit/75f7b07ddb515cf4a6f87ce3a8057e926089f97b))
+* handle ezwt commands from chat input ([a6a0167](https://github.com/bry-guy/pi-ez-worktree/commit/a6a0167dba66600026ff53b8771ab2c89bbff7af))
+* rename slash command to worktree ([9564ef2](https://github.com/bry-guy/pi-ez-worktree/commit/9564ef22a842a8e56167ccd7c78ce56863f244ca))
+* support optional and external includes ([91bc3d8](https://github.com/bry-guy/pi-ez-worktree/commit/91bc3d8369dc21e57b7d266510008f1aec0b279e))
+
 ## [1.0.1] - 2026-05-23
 
 ### Fixed
