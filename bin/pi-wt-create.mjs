@@ -7,7 +7,7 @@ async function main() {
 	const name = args._.join(" ").trim();
 	if (!name) throw new Error("Usage: pi-wt-create <name> [--cwd <path>]");
 	const state = await createWorktree({ cwd: args.cwd || process.cwd(), name });
-	printJson({ status: "success", state });
+	printJson({ status: "success", state, includeResult: state.includeResult });
 }
 
 main().catch((error) => {

@@ -18,6 +18,7 @@ import {
 	detachWorktree,
 	finishWorktree,
 	formatAttachableStatusText,
+	formatIncludeResultText,
 	formatStatusBadge,
 	formatStatusText,
 	formatWorktreeCandidate,
@@ -529,13 +530,15 @@ export default function gitWorktreeExtension(pi) {
 					return;
 				}
 				const state = await startFlow(ctx, name);
-				ctx.ui.notify(`Attached to ${state.worktreePath} on ${state.taskBranch}`, "success");
+				const includeText = formatIncludeResultText(state.includeResult);
+				ctx.ui.notify([`Attached to ${state.worktreePath} on ${state.taskBranch}`, includeText].filter(Boolean).join("\n"), "success");
 				return;
 			}
 			case "attach": {
 				const target = rest.join(" ").trim() || undefined;
 				const state = await attachFlow(ctx, target);
-				ctx.ui.notify(`Attached to existing worktree ${state.worktreePath} on ${state.taskBranch}`, "success");
+				const includeText = formatIncludeResultText(state.includeResult);
+				ctx.ui.notify([`Attached to existing worktree ${state.worktreePath} on ${state.taskBranch}`, includeText].filter(Boolean).join("\n"), "success");
 				return;
 			}
 			case "detach": {
@@ -603,14 +606,20 @@ export default function gitWorktreeExtension(pi) {
 		parameters: beginSchema,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 			const state = await startFlow(ctx, params.name);
+			const includeText = formatIncludeResultText(state.includeResult);
 			return {
 				content: [
 					{
 						type: "text",
-						text: `Worktree ready at ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}). Future project tool calls in this session will use it automatically.`,
+						text: [
+							`Worktree ready at ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}). Future project tool calls in this session will use it automatically.`,
+							includeText,
+						]
+							.filter(Boolean)
+							.join("\n"),
 					},
 				],
-				details: state,
+				details: { ...state, includeResult: state.includeResult },
 			};
 		},
 	});
@@ -626,11 +635,17 @@ export default function gitWorktreeExtension(pi) {
 		parameters: attachSchema,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 			const state = await attachFlow(ctx, params.target);
+			const includeText = formatIncludeResultText(state.includeResult);
 			return {
 				content: [
-					{ type: "text", text: `Attached to ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}).` },
+					{
+						type: "text",
+						text: [`Attached to ${state.worktreePath} on branch ${state.taskBranch} (base ${state.baseBranch}).`, includeText]
+							.filter(Boolean)
+							.join("\n"),
+					},
 				],
-				details: state,
+				details: { ...state, includeResult: state.includeResult },
 			};
 		},
 	});

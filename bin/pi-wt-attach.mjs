@@ -6,7 +6,7 @@ async function main() {
 	const args = parseArgs(process.argv.slice(2));
 	const target = args._.join(" ").trim() || undefined;
 	const state = await attachWorktree({ cwd: args.cwd || process.cwd(), target });
-	printJson({ status: "success", state });
+	printJson({ status: "success", state, includeResult: state.includeResult });
 }
 
 main().catch((error) => {

@@ -28,7 +28,7 @@
     "pi-wt-abort": "./bin/pi-wt-abort.mjs"
   },
   "scripts": {
-    "check": "node --check extensions/git-worktree.js && node --check lib/git-worktree.js && node --check bin/_cli.mjs && node --check bin/pi-wt-create.mjs && node --check bin/pi-wt-attach.mjs && node --check bin/pi-wt-detach.mjs && node --check bin/pi-wt-list.mjs && node --check bin/pi-wt-status.mjs && node --check bin/pi-wt-finish.mjs && node --check bin/pi-wt-abort.mjs"
+    "check": "node --check extensions/git-worktree.js && node --check lib/git-worktree.js && node --check bin/_cli.mjs && node --check bin/pi-wt-create.mjs && node --check bin/pi-wt-attach.mjs && node --check bin/pi-wt-detach.mjs && node --check bin/pi-wt-list.mjs && node --check bin/pi-wt-status.mjs && node --check bin/pi-wt-finish.mjs && node --check bin/pi-wt-abort.mjs && node --test"
   },
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",

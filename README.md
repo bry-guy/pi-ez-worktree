@@ -70,6 +70,23 @@ If you omit the target, attach behaves like this:
 
 When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktree.json` metadata file inside that worktree. That lets a later pi session re-attach cleanly and recover the original base branch and main checkout. The package also adds that file to the worktree's local git exclude list so it does not pollute status or get committed.
 
+## Project config
+
+Projects can add an optional `.ez-worktree.json` file at the repo root. The first supported setting is `include`, a whitelist of local files to make available in created or attached worktrees:
+
+```json
+{
+  "include": [
+    ".env.local",
+    "foo/**/bar*.json"
+  ]
+}
+```
+
+Include patterns are evaluated relative to the main checkout repo root using Node's built-in glob support. Matched files are symlinked into the worktree at the same relative path, so edits in the main checkout are visible from the worktree without maintaining separate copies. Absolute paths and `..` path segments are rejected.
+
+If an include destination already exists as a regular file in the worktree, `pi-ez-worktree` leaves it alone and reports a warning. The `.pi-ez-worktree.json` file is internal runtime metadata; `.ez-worktree.json` is the user-facing project config.
+
 ## Default finish behavior
 
 `worktree_finish` defaults to `strategy: auto`, which does this:
