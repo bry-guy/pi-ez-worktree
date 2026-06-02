@@ -72,20 +72,24 @@ When `pi-ez-worktree` creates a worktree, it also writes a small `.pi-ez-worktre
 
 ## Project config
 
-Projects can add an optional `.ez-worktree.json` file at the repo root. The first supported setting is `include`, a whitelist of local files to make available in created or attached worktrees:
+Projects can add an optional `.ez-worktree.json` file at the repo root. The supported settings are `include` for required local files and `includeOptional` for best-effort local files:
 
 ```json
 {
   "include": [
     ".env.local",
-    "foo/**/bar*.json"
+    "foo/**/bar*.json",
+    "../shared-justfile.local"
+  ],
+  "includeOptional": [
+    "frontend/.env"
   ]
 }
 ```
 
-Include patterns are evaluated relative to the main checkout repo root using Node's built-in glob support. Matched files are symlinked into the worktree at the same relative path, so edits in the main checkout are visible from the worktree without maintaining separate copies. Absolute paths and `..` path segments are rejected.
+Include patterns are evaluated relative to the config file's directory, which is the main checkout repo root. Absolute paths and `..` paths are allowed. Matches inside the repo are symlinked into the worktree at the same relative path. Matches outside the repo are symlinked into the worktree root by basename, so `../foo.txt` lands at `<worktree>/foo.txt`.
 
-If an include destination already exists as a regular file in the worktree, `pi-ez-worktree` leaves it alone and reports a warning. The `.pi-ez-worktree.json` file is internal runtime metadata; `.ez-worktree.json` is the user-facing project config.
+Required `include` patterns that match no files report warnings. Optional `includeOptional` patterns that match no files are silent. If a destination already exists, required includes fail the start/attach operation and optional includes warn and skip that file. The `.pi-ez-worktree.json` file is internal runtime metadata; `.ez-worktree.json` is the user-facing project config.
 
 ## Default finish behavior
 
